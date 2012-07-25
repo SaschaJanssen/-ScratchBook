@@ -21,5 +21,6 @@
 	<classpathentry kind="lib" path="lib/crawler/tika-parsers-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/jsoup/jsoup-1.6.3-javadoc.jar"/>
 	<classpathentry kind="lib" path="lib/jsoup/jsoup-1.6.3.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
