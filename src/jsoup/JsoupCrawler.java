@@ -11,6 +11,10 @@ import org.jsoup.select.Elements;
 
 public class JsoupCrawler {
 
+	private static final String ratingClassName = "div.rating";
+	private static final String messageDateClassName = "em.smaller";
+	private static final String userNameLinkClassName = "li.user-name a";
+	private static final String reviewCommentCssClassName = "p.review_comment";
 	private static final String reviewDataCssClassName = "div.media-story";
 	private static final String userDataCssClassName = "div.user-passport";
 	private final String selectedPaginationCssClassName = "span.highlight2";
@@ -89,42 +93,33 @@ public class JsoupCrawler {
 	}
 
 	private int convertElementTextToInt(Element element) {
-		return Integer.parseInt(element.text());
+		return Integer.parseInt(getUserNameFromUserInfo(element));
 	}
 
 	public List<String> extractReviewDataFromHtml(Element reviewContainer, Element headerElements) {
 		List<String> resultList = new ArrayList<String>();
 
-		Element userData = reviewContainer.select(userDataCssClassName).first();
-		Element reviewData = reviewContainer.select(reviewDataCssClassName).first();
+		Element userData = getUserData(reviewContainer);
+		Element reviewData = getReviewData(reviewContainer);
 
-		String message = reviewData.select("p.review_comment").first().text();
+		String message = getReviewTextFromComment(reviewData);
 		resultList.add(message);
 
-		Element userInfo = userData.select("li.user-name a").first();
-		String networkUser = userInfo.text();
+		Element userInfo = userData.select(userNameLinkClassName).first();
+		String networkUser = getUserNameFromUserInfo(userInfo);
 		resultList.add(networkUser);
 
-		String href = userInfo.attr("href");
-		String userId = href.substring(href.indexOf("=") + 1);
-		String networkUserId = userId;
+		String networkUserId = getUserIdFromUserInfo(userInfo);
 		resultList.add(networkUserId);
 
-		Elements metaData = headerElements.getElementsByTag("meta");
-		String language = "";
-		for (Element meta : metaData) {
-			if (meta.hasAttr("http-equiv") && meta.attr("http-equiv").equals("Content-Language")) {
-				language = meta.attr("content");
-				break;
-			}
-		}
+		String language = getLanguageFromHeadMetaData(headerElements);
 		resultList.add(language);
 
 		// TODO String geoLocation;
 		String networkId = "YELP";
 		resultList.add(networkId);
 
-		String networkMessageDate = reviewData.select("em.smaller").first().text();
+		String networkMessageDate = getNetworkMessageDate(reviewData);
 		resultList.add(networkMessageDate);
 
 		String messageReceiveDate = "today";
@@ -133,10 +128,55 @@ public class JsoupCrawler {
 		String customerId = "1";
 		resultList.add(customerId);
 
-		String platformUserRating = reviewData.select("div.rating").first().getElementsByTag("meta").first().attr("content");
+		String platformUserRating = getNetworkUserRating(reviewData);
 		resultList.add(platformUserRating);
 
 		return resultList;
+	}
+
+	private String getNetworkUserRating(Element reviewData) {
+		String platformUserRating = reviewData.select(ratingClassName).first().getElementsByTag("meta").first().attr("content");
+		return platformUserRating;
+	}
+
+	private String getNetworkMessageDate(Element reviewData) {
+		String networkMessageDate = reviewData.select(messageDateClassName).first().text();
+		return networkMessageDate;
+	}
+
+	private String getUserNameFromUserInfo(Element userInfo) {
+		return userInfo.text();
+	}
+
+	private String getLanguageFromHeadMetaData(Element headerElements) {
+		Elements metaData = headerElements.getElementsByTag("meta");
+		String language = "";
+		for (Element meta : metaData) {
+			if (meta.hasAttr("http-equiv") && meta.attr("http-equiv").equals("Content-Language")) {
+				language = meta.attr("content");
+				break;
+			}
+		}
+		return language;
+	}
+
+	private String getUserIdFromUserInfo(Element userInfo) {
+		String href = userInfo.attr("href");
+		String userId = href.substring(href.indexOf("=") + 1);
+		String networkUserId = userId;
+		return networkUserId;
+	}
+
+	private String getReviewTextFromComment(Element reviewData) {
+		return reviewData.select(reviewCommentCssClassName).first().text();
+	}
+
+	private Element getReviewData(Element reviewContainer) {
+		return reviewContainer.select(reviewDataCssClassName).first();
+	}
+
+	private Element getUserData(Element reviewContainer) {
+		return reviewContainer.select(userDataCssClassName).first();
 	}
 
 }

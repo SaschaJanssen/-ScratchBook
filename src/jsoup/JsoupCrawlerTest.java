@@ -1,13 +1,14 @@
 package jsoup;
 
-import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -24,14 +25,22 @@ public class JsoupCrawlerTest {
 		System.setProperty("http.proxyHost", "cache.gsa.westlb.net");
 		System.setProperty("http.proxyPort", "8080");
 
-		jsoupCrawler = new JsoupCrawler("https://www.yelp.com", "/biz/vapiano-new-york-2");
+
+		// http://www.tripadvisor.com
+		jsoupCrawler = new JsoupCrawler("http://www.tripadvisor.com", "/Restaurant_Review-g60763-d1846484-Reviews-Vapiano-New_York_City_New_York.html");
 		doc = jsoupCrawler.getDocument();
 	}
 
 	@Test
 	public void testGetDocument() throws Exception {
 		assertNotNull(doc);
-		assertEquals("Vapiano - Greenwich Village - New York, NY", doc.title());
+
+		Element body = doc.body();
+		Element reviews = body.select("div.review_collection").first();
+		Elements re = reviews.select("div.reviewSelector");
+		for (Element element : re) {
+			System.out.println(element.select("div.entry").text());
+		}
 	}
 
 	@Test
