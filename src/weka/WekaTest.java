@@ -5,7 +5,7 @@ import java.util.List;
 
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
-import weka.classifiers.bayes.NaiveBayesUpdateable;
+import weka.classifiers.trees.J48;
 import weka.core.Attribute;
 import weka.core.FastVector;
 import weka.core.Instance;
@@ -31,10 +31,12 @@ public class WekaTest {
 
             Instances fillteredTrainData = filterInstances(train);
 
-            Classifier classifier = new NaiveBayesUpdateable();
+            // Classifier classifier = new NaiveBayesUpdateable();
+            Classifier classifier = new J48();
             classifier.buildClassifier(fillteredTrainData);
 
-            evaluateClassification(train, classifier);
+            // only needed for bayes classification
+            // evaluateClassification(train, classifier);
 
             Instances dataset = createInstacesForClassification(testData, train);
 
@@ -54,6 +56,20 @@ public class WekaTest {
         return tokenizer;
     }
 
+    private StringToWordVector createStringToWordVectorFilter(Instances instancesForInputFormat, Tokenizer tokenizer)
+            throws Exception {
+        StringToWordVector filter = new StringToWordVector();
+        // filter.setStopwords(new File("/home/u179995/english"));
+
+        filter.setTokenizer(tokenizer);
+        filter.setIDFTransform(true);
+        filter.setLowerCaseTokens(true);
+        filter.setTFTransform(true);
+        filter.setInputFormat(instancesForInputFormat);
+
+        return filter;
+    }
+
     private List<String> classifyDataset(Classifier classifier, Instances datasetForClassification,
             Attribute classAttributes) throws Exception {
         List<String> result = new ArrayList<String>();
@@ -63,10 +79,12 @@ public class WekaTest {
 
             double predictedValue = classifier.classifyInstance(instanceUnderTest);
 
-            String predictString = classAttributes.value((int) predictedValue) + " (" + predictedValue + ")";
-            System.out.println("\n" + datasetForClassification.instance(i));
-            System.out.println(predictString + " ");
+            // TODO
+            // String predictString = classAttributes.value((int) predictedValue) + " (" + predictedValue + ")";
+            // System.out.println("\n" + datasetForClassification.instance(i));
+            // System.out.println(predictString + " ");
 
+            System.out.println(classAttributes.value((int) predictedValue));
             result.add(classAttributes.value((int) predictedValue));
         }
         return result;
@@ -108,19 +126,6 @@ public class WekaTest {
 
     private Instances filterInstances(Instances unfilteredTrainingData) throws Exception {
         return Filter.useFilter(unfilteredTrainingData, filter);
-    }
-
-    private StringToWordVector createStringToWordVectorFilter(Instances instancesForInputFormat, Tokenizer tokenizer) throws Exception {
-        StringToWordVector filter = new StringToWordVector();
-        // filter.setStopwords(new File("/home/u179995/english"));
-
-        filter.setTokenizer(tokenizer);
-        filter.setIDFTransform(true);
-        filter.setLowerCaseTokens(true);
-        filter.setTFTransform(true);
-        filter.setInputFormat(instancesForInputFormat);
-
-        return filter;
     }
 
     private Instances readTrainingDataFromFile() throws Exception {
