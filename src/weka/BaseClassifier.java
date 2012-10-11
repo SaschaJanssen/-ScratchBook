@@ -21,29 +21,57 @@ public abstract class BaseClassifier {
     protected Classifier classifier = null;
 
     private StringToWordVector filter = null;
-    
+
     protected abstract void buildClassifier(Instances fillteredTrainData) throws Exception;
-    
-    public void train() {
+
+    public void train(List<TrainWrapper> trainData) {
         try {
-            train = readTrainingDataFromFile();
+            train = createInstancesFromDataList(trainData);
+            // train = readTrainingDataFromFile();
             Tokenizer tokenizer = createTokenizer();
             filter = createStringToWordVectorFilter(train, tokenizer);
-            
+
             Instances fillteredTrainData = filterInstances(train);
             buildClassifier(fillteredTrainData);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
+
+    private Instances createInstancesFromDataList(List<TrainWrapper> trainData) {
+        Attribute stringAttribute = new Attribute("text", (FastVector) null);
+
+        FastVector classVal = new FastVector(3);
+        classVal.addElement("POSITIVE");
+        classVal.addElement("NEGATIVE");
+        classVal.addElement("NEUTRAL");
+        Attribute classAttribute = new Attribute("class", classVal);
+
+        FastVector wekaAttributes = new FastVector(2);
+        wekaAttributes.addElement(stringAttribute);
+        wekaAttributes.addElement(classAttribute);
+
+        Instances trainingSet = new Instances("Rel", wekaAttributes, 10);
+        trainingSet.setClassIndex(1);
+
+        for (TrainWrapper trainWrapper : trainData) {
+            Instance instance = new Instance(2);
+            instance.setValue((Attribute) wekaAttributes.elementAt(0), trainWrapper.message);
+            instance.setValue((Attribute) wekaAttributes.elementAt(1), trainWrapper.classification);
+
+            trainingSet.add(instance);
+        }
+
+        return trainingSet;
+    }
+
     public List<String> classify(List<String> testData) {
         if (classifier == null) {
             return null;
         }
-        
+
         List<String> result = new ArrayList<String>();
-        
+
         Instances dataset = createInstacesForClassification(testData, train);
 
         Attribute classAttributes = train.classAttribute();
@@ -54,7 +82,7 @@ public abstract class BaseClassifier {
         }
         return result;
     }
-    
+
     private Tokenizer createTokenizer() {
         NGramTokenizer tokenizer = new NGramTokenizer();
         tokenizer.setNGramMaxSize(3);
@@ -75,7 +103,7 @@ public abstract class BaseClassifier {
         return filter;
     }
 
-    protected List<String> classifyDataset(Classifier classifier, Instances datasetForClassification,
+    private List<String> classifyDataset(Classifier classifier, Instances datasetForClassification,
             Attribute classAttributes) throws Exception {
         List<String> result = new ArrayList<String>();
 
@@ -96,7 +124,7 @@ public abstract class BaseClassifier {
         return result;
     }
 
-    protected Instances createInstacesForClassification(List<String> testData, Instances train) {
+    private Instances createInstacesForClassification(List<String> testData, Instances train) {
         // Defining structure for weka instance.
         Attribute string = new Attribute("text", (FastVector) null);
 
@@ -130,11 +158,11 @@ public abstract class BaseClassifier {
         return filter.output();
     }
 
-    protected Instances filterInstances(Instances unfilteredTrainingData) throws Exception {
+    private Instances filterInstances(Instances unfilteredTrainingData) throws Exception {
         return Filter.useFilter(unfilteredTrainingData, filter);
     }
 
-    protected Instances readTrainingDataFromFile() throws Exception {
+    private Instances readTrainingDataFromFile() throws Exception {
         DataSource source = new DataSource("bayes/data.arff");
         Instances train = source.getDataSet();
 

@@ -29,12 +29,14 @@ public class ClassifiersTest {
 
     @Test
     public void testWekaClassifierBayes() throws Exception {
+        List<TrainWrapper> trainingData = readLearningData();
+
         List<String> testData = readTestDataFile();
 
         BaseClassifier classifier = new BayesClassifier();
-        classifier.train();
+        classifier.train(trainingData);
         List<String> result = classifier.classify(testData);
-        
+
         // result = classifier.run(testData);
         assertEquals(masterBayes.length, result.size());
 
@@ -45,17 +47,56 @@ public class ClassifiersTest {
 
     @Test
     public void testWekaClassifierJ48() {
+        List<TrainWrapper> trainingData = readLearningData();
+
         List<String> testData = readTestDataFile();
 
         BaseClassifier classifier = new J48Classifier();
-        classifier.train();
+        classifier.train(trainingData);
         List<String> result = classifier.classify(testData);
-        
+
         assertEquals(masterJ48.length, result.size());
 
         for (int i = 0; i < masterJ48.length; i++) {
             assertEquals(masterJ48[i], result.get(i));
         }
+    }
+
+    private List<TrainWrapper> readLearningData() {
+        List<TrainWrapper> result = new ArrayList<TrainWrapper>();
+
+        Reader reader = null;
+        try {
+            reader = new FileReader(new File("bayes/sentimentLearningTestData"));
+        } catch (FileNotFoundException e1) {
+            e1.printStackTrace();
+        }
+        BufferedReader br = new BufferedReader(reader);
+
+        String line = null;
+        try {
+            while ((line = br.readLine()) != null) {
+                String[] splitted = line.split("§");
+
+                TrainWrapper wrapper = new TrainWrapper();
+                wrapper.message = splitted[0];
+                wrapper.classification = splitted[1];
+
+                result.add(wrapper);
+            }
+        } catch (IOException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        } finally {
+            try {
+                br.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+
+        return result;
     }
 
     private List<String> readTestDataFile() {
