@@ -18,10 +18,28 @@ import weka.filters.unsupervised.attribute.StringToWordVector;
 public abstract class BaseClassifier {
 
     protected StringToWordVector filter = null;
+    protected Instances train = null;
+    protected Classifier classifier = null;
     
-    public abstract List<String> run(List<String> testData);
     public abstract void train();
-    public abstract List<String> classify(List<String> testData);
+    
+    public List<String> classify(List<String> testData) {
+        if (classifier == null) {
+            return null;
+        }
+        
+        List<String> result = new ArrayList<String>();
+        
+        Instances dataset = createInstacesForClassification(testData, train);
+
+        Attribute classAttributes = train.classAttribute();
+        try {
+            result = classifyDataset(classifier, dataset, classAttributes);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
     
     protected Tokenizer createTokenizer() {
         NGramTokenizer tokenizer = new NGramTokenizer();
