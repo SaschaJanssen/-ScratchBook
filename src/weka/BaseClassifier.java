@@ -5,7 +5,6 @@ import java.util.List;
 
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
-import weka.classifiers.trees.J48;
 import weka.core.Attribute;
 import weka.core.FastVector;
 import weka.core.Instance;
@@ -16,47 +15,21 @@ import weka.core.tokenizers.Tokenizer;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.StringToWordVector;
 
-public class WekaTest {
+public abstract class BaseClassifier {
 
-    private StringToWordVector filter = null;
-
-    public List<String> run(List<String> testData) {
-        List<String> result = new ArrayList<String>();
-
-        try {
-            Instances train = readTrainingDataFromFile();
-
-            Tokenizer tokenizer = createTokenizer();
-            filter = createStringToWordVectorFilter(train, tokenizer);
-
-            Instances fillteredTrainData = filterInstances(train);
-
-            // Classifier classifier = new NaiveBayesUpdateable();
-            Classifier classifier = new J48();
-            classifier.buildClassifier(fillteredTrainData);
-
-            // only needed for bayes classification
-            // evaluateClassification(train, classifier);
-
-            Instances dataset = createInstacesForClassification(testData, train);
-
-            Attribute classAttributes = train.classAttribute();
-            result = classifyDataset(classifier, dataset, classAttributes);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return result;
-    }
-
-    private Tokenizer createTokenizer() {
+    protected StringToWordVector filter = null;
+    
+    public abstract List<String> run(List<String> testData);
+    public abstract void train();
+    public abstract List<String> classify(List<String> testData);
+    
+    protected Tokenizer createTokenizer() {
         NGramTokenizer tokenizer = new NGramTokenizer();
         tokenizer.setNGramMaxSize(3);
         return tokenizer;
     }
 
-    private StringToWordVector createStringToWordVectorFilter(Instances instancesForInputFormat, Tokenizer tokenizer)
+    protected StringToWordVector createStringToWordVectorFilter(Instances instancesForInputFormat, Tokenizer tokenizer)
             throws Exception {
         StringToWordVector filter = new StringToWordVector();
         // filter.setStopwords(new File("/home/u179995/english"));
@@ -70,7 +43,7 @@ public class WekaTest {
         return filter;
     }
 
-    private List<String> classifyDataset(Classifier classifier, Instances datasetForClassification,
+    protected List<String> classifyDataset(Classifier classifier, Instances datasetForClassification,
             Attribute classAttributes) throws Exception {
         List<String> result = new ArrayList<String>();
 
@@ -80,7 +53,8 @@ public class WekaTest {
             double predictedValue = classifier.classifyInstance(instanceUnderTest);
 
             // TODO
-            // String predictString = classAttributes.value((int) predictedValue) + " (" + predictedValue + ")";
+            // String predictString = classAttributes.value((int)
+            // predictedValue) + " (" + predictedValue + ")";
             // System.out.println("\n" + datasetForClassification.instance(i));
             // System.out.println(predictString + " ");
 
@@ -90,7 +64,7 @@ public class WekaTest {
         return result;
     }
 
-    private Instances createInstacesForClassification(List<String> testData, Instances train) {
+    protected Instances createInstacesForClassification(List<String> testData, Instances train) {
         // Defining structure for weka instance.
         Attribute string = new Attribute("text", (FastVector) null);
 
@@ -114,7 +88,7 @@ public class WekaTest {
         return dataset;
     }
 
-    private void evaluateClassification(Instances train, Classifier bayes) throws Exception {
+    protected void evaluateClassification(Instances train, Classifier bayes) throws Exception {
         Evaluation evaluation = new Evaluation(train);
         evaluation.evaluateModel(bayes, train);
     }
@@ -124,11 +98,11 @@ public class WekaTest {
         return filter.output();
     }
 
-    private Instances filterInstances(Instances unfilteredTrainingData) throws Exception {
+    protected Instances filterInstances(Instances unfilteredTrainingData) throws Exception {
         return Filter.useFilter(unfilteredTrainingData, filter);
     }
 
-    private Instances readTrainingDataFromFile() throws Exception {
+    protected Instances readTrainingDataFromFile() throws Exception {
         DataSource source = new DataSource("bayes/data.arff");
         Instances train = source.getDataSet();
 
@@ -137,5 +111,4 @@ public class WekaTest {
         }
         return train;
     }
-
 }
