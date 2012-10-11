@@ -17,11 +17,25 @@ import weka.filters.unsupervised.attribute.StringToWordVector;
 
 public abstract class BaseClassifier {
 
-    protected StringToWordVector filter = null;
     protected Instances train = null;
     protected Classifier classifier = null;
+
+    private StringToWordVector filter = null;
     
-    public abstract void train();
+    protected abstract void buildClassifier(Instances fillteredTrainData) throws Exception;
+    
+    public void train() {
+        try {
+            train = readTrainingDataFromFile();
+            Tokenizer tokenizer = createTokenizer();
+            filter = createStringToWordVectorFilter(train, tokenizer);
+            
+            Instances fillteredTrainData = filterInstances(train);
+            buildClassifier(fillteredTrainData);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
     
     public List<String> classify(List<String> testData) {
         if (classifier == null) {
@@ -41,13 +55,13 @@ public abstract class BaseClassifier {
         return result;
     }
     
-    protected Tokenizer createTokenizer() {
+    private Tokenizer createTokenizer() {
         NGramTokenizer tokenizer = new NGramTokenizer();
         tokenizer.setNGramMaxSize(3);
         return tokenizer;
     }
 
-    protected StringToWordVector createStringToWordVectorFilter(Instances instancesForInputFormat, Tokenizer tokenizer)
+    private StringToWordVector createStringToWordVectorFilter(Instances instancesForInputFormat, Tokenizer tokenizer)
             throws Exception {
         StringToWordVector filter = new StringToWordVector();
         // filter.setStopwords(new File("/home/u179995/english"));
