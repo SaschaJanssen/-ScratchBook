@@ -1,6 +1,6 @@
 package weka;
 
-public class TrainWrapper {
+public class TrainingDataValueObject {
     public String message;
     public String classification;
 }

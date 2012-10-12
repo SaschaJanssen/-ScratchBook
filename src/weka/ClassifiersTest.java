@@ -20,24 +20,30 @@ public class ClassifiersTest {
     private String j48ClassificationString = "NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEGATIVE,NEUTRAL,POSITIVE,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,POSITIVE,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,POSITIVE,POSITIVE,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEGATIVE,NEGATIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEGATIVE,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,POSITIVE,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,POSITIVE,POSITIVE,POSITIVE,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,NEGATIVE,NEUTRAL,POSITIVE,NEUTRAL";
     private String[] masterBayes;
     private String[] masterJ48;
+    private List<String> testDataSet;
+    private List<TrainingDataValueObject> trainingDataSet;
 
     @Before
     public void setUp() throws Exception {
         masterJ48 = j48ClassificationString.split(",");
         masterBayes = bayesClassificationString.split(",");
+        
+        trainingDataSet = readLearningData();
+        testDataSet = readTestDataFile();
+    }
+    
+    @Test(expected=IllegalStateException.class)
+    public void testClassifierException() throws Exception {
+        BaseClassifier classifier = new BayesClassifier();
+        classifier.classify(testDataSet);
     }
 
     @Test
     public void testWekaClassifierBayes() throws Exception {
-        List<TrainWrapper> trainingData = readLearningData();
-
-        List<String> testData = readTestDataFile();
-
         BaseClassifier classifier = new BayesClassifier();
-        classifier.train(trainingData);
-        List<String> result = classifier.classify(testData);
+        classifier.train(trainingDataSet);
+        List<String> result = classifier.classify(testDataSet);
 
-        // result = classifier.run(testData);
         assertEquals(masterBayes.length, result.size());
 
         for (int i = 0; i < masterBayes.length; i++) {
@@ -47,13 +53,9 @@ public class ClassifiersTest {
 
     @Test
     public void testWekaClassifierJ48() {
-        List<TrainWrapper> trainingData = readLearningData();
-
-        List<String> testData = readTestDataFile();
-
         BaseClassifier classifier = new J48Classifier();
-        classifier.train(trainingData);
-        List<String> result = classifier.classify(testData);
+        classifier.train(trainingDataSet);
+        List<String> result = classifier.classify(testDataSet);
 
         assertEquals(masterJ48.length, result.size());
 
@@ -62,36 +64,28 @@ public class ClassifiersTest {
         }
     }
 
-    private List<TrainWrapper> readLearningData() {
-        List<TrainWrapper> result = new ArrayList<TrainWrapper>();
+    private List<TrainingDataValueObject> readLearningData() {
+        List<TrainingDataValueObject> result = new ArrayList<TrainingDataValueObject>();
 
-        Reader reader = null;
-        try {
-            reader = new FileReader(new File("bayes/sentimentLearningTestData"));
-        } catch (FileNotFoundException e1) {
-            e1.printStackTrace();
-        }
-        BufferedReader br = new BufferedReader(reader);
+        BufferedReader br = getFileReader("bayes/sentimentLearningTestData");
 
         String line = null;
         try {
             while ((line = br.readLine()) != null) {
                 String[] splitted = line.split("§");
 
-                TrainWrapper wrapper = new TrainWrapper();
+                TrainingDataValueObject wrapper = new TrainingDataValueObject();
                 wrapper.message = splitted[0];
                 wrapper.classification = splitted[1];
 
                 result.add(wrapper);
             }
         } catch (IOException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         } finally {
             try {
                 br.close();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
@@ -99,17 +93,21 @@ public class ClassifiersTest {
         return result;
     }
 
-    private List<String> readTestDataFile() {
-        List<String> testData = new ArrayList<String>();
-
+    private BufferedReader getFileReader(String filePath) {
         Reader reader = null;
         try {
-            reader = new FileReader(new File("bayes/testData"));
+            reader = new FileReader(new File(filePath));
         } catch (FileNotFoundException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         }
         BufferedReader br = new BufferedReader(reader);
+        return br;
+    }
+
+    private List<String> readTestDataFile() {
+        List<String> testData = new ArrayList<String>();
+
+        BufferedReader br = getFileReader("bayes/testData");
 
         String line = null;
         try {
@@ -117,13 +115,11 @@ public class ClassifiersTest {
                 testData.add(line);
             }
         } catch (IOException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         } finally {
             try {
                 br.close();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
