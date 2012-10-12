@@ -21,9 +21,13 @@ public abstract class BaseClassifier {
 
     private StringToWordVector filter = null;
 
+    public BaseClassifier(List<TrainingDataValueObject> trainingDataSet) {
+        this.trainClassifier(trainingDataSet);
+    }
+
     protected abstract void buildClassifier(Instances fillteredTrainData) throws Exception;
 
-    public void train(List<TrainingDataValueObject> trainData) {
+    public void trainClassifier(List<TrainingDataValueObject> trainData) {
         try {
             train = createInstancesFromDataList(trainData);
             Tokenizer tokenizer = createTokenizer();
@@ -63,12 +67,10 @@ public abstract class BaseClassifier {
         return trainingSet;
     }
 
+    /**
+     * Classifies a set of testing data strings with the initialized Classifier. 
+     */
     public List<String> classify(List<String> testData) {
-        if (classifier == null) {
-            throw new IllegalStateException(
-                    "The classifier ist not trained. Run the train method with your training data first.");
-        }
-
         List<String> result = new ArrayList<String>();
 
         Instances dataset = createInstacesForClassification(testData, train);

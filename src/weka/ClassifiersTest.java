@@ -31,17 +31,11 @@ public class ClassifiersTest {
         trainingDataSet = readLearningData();
         testDataSet = readTestDataFile();
     }
-    
-    @Test(expected=IllegalStateException.class)
-    public void testClassifierException() throws Exception {
-        BaseClassifier classifier = new BayesClassifier();
-        classifier.classify(testDataSet);
-    }
 
     @Test
     public void testWekaClassifierBayes() throws Exception {
-        BaseClassifier classifier = new BayesClassifier();
-        classifier.train(trainingDataSet);
+        BaseClassifier classifier = new BayesClassifier(trainingDataSet);
+        classifier.trainClassifier(trainingDataSet);
         List<String> result = classifier.classify(testDataSet);
 
         assertEquals(masterBayes.length, result.size());
@@ -53,8 +47,7 @@ public class ClassifiersTest {
 
     @Test
     public void testWekaClassifierJ48() {
-        BaseClassifier classifier = new J48Classifier();
-        classifier.train(trainingDataSet);
+        BaseClassifier classifier = new J48Classifier(trainingDataSet);
         List<String> result = classifier.classify(testDataSet);
 
         assertEquals(masterJ48.length, result.size());
